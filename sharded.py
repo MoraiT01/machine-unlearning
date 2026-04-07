@@ -3,30 +3,30 @@ from hashlib import sha256
 import importlib
 import json
 
-def sizeOfShard(container, shard):
+def sizeOfShard(container: str, shard: int):
     '''
     Returns the size (in number of points) of the shard before any unlearning request.
     '''
     shards = np.load('containers/{}/splitfile.npy'.format(container), allow_pickle=True)
     
-    return shards[shard].shape[0]
+    return shards[int(shard)].shape[0]
 
 def realSizeOfShard(container, label, shard):
     '''
     Returns the actual size of the shard (including unlearning requests).
     '''
     shards = np.load('containers/{}/splitfile.npy'.format(container), allow_pickle=True)
-    requests = np.load('containers/{}/requestfile:{}.npy'.format(container, label), allow_pickle=True)
+    requests = np.load('containers/{}/requestfile-{}.npy'.format(container, label), allow_pickle=True)
     
     return shards[shard].shape[0] - requests[shard].shape[0]
 
-def getShardHash(container, label, shard, until=None):
+def getShardHash(container, label, shard: int, until=None):
     '''
     Returns a hash of the indices of the points in the shard lower than until
     that are not in the requests (separated by :).
     '''
     shards = np.load('containers/{}/splitfile.npy'.format(container), allow_pickle=True)
-    requests = np.load('containers/{}/requestfile:{}.npy'.format(container, label), allow_pickle=True)
+    requests = np.load('containers/{}/requestfile-{}.npy'.format(container, label), allow_pickle=True)
 
     if until == None:
         until = shards[shard].shape[0]
@@ -41,7 +41,7 @@ def fetchShardBatch(container, label, shard, batch_size, dataset, offset=0, unti
     optionnally located between offset and until (slicing).
     '''
     shards = np.load('containers/{}/splitfile.npy'.format(container), allow_pickle=True)
-    requests = np.load('containers/{}/requestfile:{}.npy'.format(container, label), allow_pickle=True)
+    requests = np.load('containers/{}/requestfile-{}.npy'.format(container, label), allow_pickle=True)
     
     with open(dataset) as f:
         datasetfile = json.loads(f.read())

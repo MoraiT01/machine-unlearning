@@ -4,8 +4,8 @@ import os
 import importlib
 
 def main(
-    baseline: int,
     container: str,
+    baseline: int | None = None,
     dataset: str = "datasets/purchase/datasetfile",
     label: str="latest",
     shards: int=1,
@@ -20,9 +20,9 @@ def main(
 
     # Output files used for the vote.
     if baseline != None:
-        filenames = ["shard-{}:{}.npy".format(baseline, label)]
+        filenames = ["shard{}-{}.npy".format(baseline, label)]
     else:
-        filenames = ["shard-{}:{}.npy".format(i, label) for i in range(shards)]
+        filenames = ["shard{}-{}.npy".format(i, label) for i in range(shards)]
 
     # Concatenate output files.
     outputs = []

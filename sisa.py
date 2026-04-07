@@ -14,7 +14,7 @@ from importlib import import_module
 
 def main(
     container, 
-    shard,
+    shard: int,
     model = "purchase",
     train = False,
     test = False,
@@ -244,13 +244,13 @@ def main(
                 if sl == slices - 1:
                     os.symlink(
                         "{}.pt".format(slice_hash),
-                        "containers/{}/cache/shard-{}:{}.pt".format(
+                        "containers/{}/cache/shard{}-{}.pt".format(
                             container, shard, label
                         ),
                     )
                     os.symlink(
                         "{}.time".format(slice_hash),
-                        "containers/{}/times/shard-{}:{}.time".format(
+                        "containers/{}/times/shard{}-{}.time".format(
                             container, shard, label
                         ),
                     )
@@ -258,18 +258,18 @@ def main(
             elif sl == slices - 1:
                 os.symlink(
                     "{}.pt".format(slice_hash),
-                    "containers/{}/cache/shard-{}:{}.pt".format(
+                    "containers/{}/cache/shard{}-{}.pt".format(
                         container, shard, label
                     ),
                 )
                 if not os.path.exists(
-                    "containers/{}/times/shard-{}:{}.time".format(
+                    "containers/{}/times/shard{}-{}.time".format(
                         container, shard, label
                     )
                 ):
                     os.symlink(
                         "null.time",
-                        "containers/{}/times/shard-{}:{}.time".format(
+                        "containers/{}/times/shard{}-{}.time".format(
                             container, shard, label
                         ),
                     )
@@ -279,7 +279,7 @@ def main(
         # Load model weights from shard checkpoint (last slice).
         model.load_state_dict(
             torch.load(
-                "containers/{}/cache/shard-{}:{}.pt".format(
+                "containers/{}/cache/shard{}-{}.pt".format(
                     container, shard, label
                 )
             )
@@ -311,7 +311,7 @@ def main(
         # Save outputs in numpy format.
         outputs = np.array(outputs)
         np.save(
-            "containers/{}/outputs/shard-{}:{}.npy".format(
+            "containers/{}/outputs/shard{}-{}.npy".format(
                 container, shard, label
             ),
             outputs,

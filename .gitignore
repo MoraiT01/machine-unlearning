@@ -1,8 +1,8 @@
 # General Use
 local/
 .vscode/
+containers/
+data/
+__pycache__/
 
 # Specific datafiles
-purchase2_test.npy
-purchase2_train.npy
-2_kmeans.npy

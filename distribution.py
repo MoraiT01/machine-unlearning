@@ -3,31 +3,36 @@ import json
 import os
 
 def main(
-    args_shard:int | None = None,
+    args_shards:int | None = None,
     args_requests:int | None = None,
     distribution:str = "uniform",
     container:str = "default",
     dataset:str = "datasets/purchase/datasetfile",
     label:str = "latest",
 ):
+    
     # Load dataset metadata.
     with open(dataset) as f:
         datasetfile = json.loads(f.read())
 
-    if args_shard != None:
+    if args_shards != None:
         # If distribution is uniform, split without optimizing.
         if distribution == "uniform":
             partition = np.split(
                 np.arange(0, datasetfile["nb_train"]),
                 [
-                    t * (datasetfile["nb_train"] // args_shard)
-                    for t in range(1, args_shard)
+                    t * (datasetfile["nb_train"] // args_shards)
+                    for t in range(1, args_shards)
                 ],
             )
+            partition = np.array(partition, dtype=object)
             np.save("containers/{}/splitfile.npy".format(container), partition)
-            requests = np.array([[] for _ in range(args_shard)])
+            requests = np.array(
+                [np.array([], dtype=int) for _ in range(args_shards)],
+                dtype=object,
+            )
             np.save(
-                "containers/{}/requestfile:{}.npy".format(container, label),
+                "containers/{}/requestfile-{}.npy".format(container, label),
                 requests,
             )
 
@@ -50,7 +55,7 @@ def main(
                     )
                     return a / ((index + 1) ** (a + 1))
 
-            if args_shard != None:
+            if args_shards != None:
                 # Initialize queue and partition.
                 weights = mass(np.arange(0, datasetfile["nb_train"]))
                 indices = np.argsort(weights)
@@ -65,7 +70,7 @@ def main(
                     else int(0.01 * datasetfile["nb_train"])
                 )
 
-                for _ in range(datasetfile["nb_train"] - args_shard):
+                for _ in range(datasetfile["nb_train"] - args_shards):
                     # Fetch top 2 clusters and merge them.
                     w1 = queue[0]
                     w2 = queue[1]
@@ -126,17 +131,26 @@ def main(
 
                 # Generate splitfile and empty request file.
                 np.save("containers/{}/splitfile.npy".format(container), partition)
-                requests = np.array([[] for _ in range(partition.shape[0])])
+                requests = np.array(
+                    [np.array([], dtype=int) for _ in range(len(partition))],
+                    dtype=object,
+                )
                 np.save(
-                    "containers/{}/requestfile:{}.npy".format(container, label),
+                    "containers/{}/requestfile-{}.npy".format(container, label),
                     requests,
                 )
 
     if args_requests != None:
         if distribution == "reset":
-            requests = np.array([[] for _ in range(partition.shape[0])])
+            partition = np.load(
+                "containers/{}/splitfile.npy".format(container), allow_pickle=True
+            )
+            requests = np.array(
+                [np.array([], dtype=int) for _ in range(partition.shape[0])],
+                dtype=object,
+            )
             np.save(
-                "containers/{}/requestfile:{}.npy".format(container, label),
+                "containers/{}/requestfile-{}.npy".format(container, label),
                 requests,
             )
         else:
@@ -170,8 +184,8 @@ def main(
 
             # Update requestfile.
             np.save(
-                "containers/{}/requestfile:{}.npy".format(container, label),
-                np.array(requests),
+                "containers/{}/requestfile-{}.npy".format(container, label),
+                np.array(requests, dtype=object),
             )
 
 
@@ -213,7 +227,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(
-        args_shard=args.shards,
+        args_shards=args.shards,
         args_requests=args.requests,
         distribution=args.distribution,
         container=args.container,
